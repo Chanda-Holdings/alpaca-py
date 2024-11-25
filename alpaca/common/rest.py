@@ -121,7 +121,6 @@ class RESTClient(ABC):
             # uncanny issues in non-GET request redirecting http->https.
             # It's better to fail early if the URL isn't right.
             "allow_redirects": False,
-            "expire_after": 0,
         }
 
         if method.upper() in ["GET", "DELETE"]:
