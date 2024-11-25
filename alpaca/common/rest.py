@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Type, Union, Tuple, Iterator
 
 from pydantic import BaseModel
 from requests import Session
+from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from itertools import chain
 
@@ -67,6 +68,9 @@ class RESTClient(ABC):
         self._use_basic_auth: bool = use_basic_auth
         self._use_raw_data: bool = raw_data
         self._session: Session = Session()
+        adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100)
+        self._session.mount('https://', adapter)
+        self._session.mount('http://', adapter)
 
         # setting up request retry configurations
         self._retry: int = DEFAULT_RETRY_ATTEMPTS
@@ -117,6 +121,7 @@ class RESTClient(ABC):
             # uncanny issues in non-GET request redirecting http->https.
             # It's better to fail early if the URL isn't right.
             "allow_redirects": False,
+            "expire_after": 0,
         }
 
         if method.upper() in ["GET", "DELETE"]:
