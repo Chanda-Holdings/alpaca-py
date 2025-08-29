@@ -13,6 +13,7 @@ from alpaca.trading.enums import (
     OrderType,
     OrderClass,
     PDTCheck,
+    PositionIntent,
     TimeInForce,
     OrderSide,
     PositionSide,
@@ -25,7 +26,7 @@ from alpaca.trading.enums import (
     TradeConfirmationEmail,
     TradeEvent,
 )
-from pydantic import Field
+from pydantic import Field, model_validator
 
 
 class Asset(ModelWithID):
@@ -176,14 +177,15 @@ class Order(ModelWithID):
         submitted_at (datetime): Timestamp when the order was submitted.
         filled_at (Optional[datetime]): Timestamp when the order was filled.
         expired_at (Optional[datetime]): Timestamp when the order expired at.
+        expires_at (Optional[datetime]): An auto cancel request will be triggered after this timestamp.
         canceled_at (Optional[datetime]): Timestamp when the order was canceled.
         failed_at (Optional[datetime]): Timestamp when the order failed at.
         replaced_at (Optional[datetime]): Timestamp when the order was replaced by a new order.
         replaced_by (Optional[UUID]): ID of order that replaces this order.
         replaces (Optional[UUID]): ID of order which this order replaces.
-        asset_id (UUID): ID of the asset.
-        symbol (str): Symbol of the asset.
-        asset_class (AssetClass): Asset class of the asset.
+        asset_id (Optional[UUID]): ID of the asset. Omitted from top-level of response if the order is of mleg class.
+        symbol (Optional[str]): Symbol of the asset. Omitted from top-level of response if the order is of mleg class.
+        asset_class (Optional[AssetClass]): Asset class of the asset. Omitted from top-level of response if the order is of mleg class.
         notional (Optional[str]): Ordered notional amount. If entered, qty will be null. Can take up to 9 decimal
           points.
         qty (Optional[str]): Ordered quantity. If entered, notional will be null. Can take up to 9 decimal points.
@@ -191,9 +193,9 @@ class Order(ModelWithID):
         filled_avg_price (Optional[str]): Filled average price. Can be 0 until order is processed in case order is
           passed outside of market hours.
         order_class (OrderClass): Valid values: simple, bracket, oco or oto.
-        order_type (OrderType): Deprecated with just type field below.
-        type (OrderType): Valid values: market, limit, stop, stop_limit, trailing_stop.
-        side (OrderSide): Valid values: buy and sell.
+        order_type (Optional[OrderType]): Deprecated with just type field below. Omitted from legs of mleg orders.
+        type (Optional[OrderType]): Valid values: market, limit, stop, stop_limit, trailing_stop. Omitted from legs of mleg orders.
+        side (Optional[OrderSide]): Valid values: buy and sell. Omitted from top-level of response if the order is of mleg class.
         time_in_force (TimeInForce): Length of time the order is in force.
         limit_price (Optional[str]): Limit price of the order.
         stop_price (Optional[str]): Stop price of the order.
@@ -204,6 +206,8 @@ class Order(ModelWithID):
         trail_percent (Optional[str]): The percent value away from the high water mark for trailing stop orders.
         trail_price (Optional[str]): The dollar value away from the high water mark for trailing stop orders.
         hwm (Optional[str]): The highest (lowest) market price seen since the trailing stop order was submitted.
+        position_intent  (Optional[PositionIntent]): Represents the desired position strategy.
+        ratio_qty (Optional[str]): The proportional quantity of this leg in relation to the overall multi-leg order quantity.
     """
 
     client_order_id: str
@@ -212,22 +216,23 @@ class Order(ModelWithID):
     submitted_at: datetime
     filled_at: Optional[datetime] = None
     expired_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
     canceled_at: Optional[datetime] = None
     failed_at: Optional[datetime] = None
     replaced_at: Optional[datetime] = None
     replaced_by: Optional[UUID] = None
     replaces: Optional[UUID] = None
-    asset_id: UUID
-    symbol: str
-    asset_class: AssetClass
+    asset_id: Optional[UUID] = None
+    symbol: Optional[str] = None
+    asset_class: Optional[AssetClass] = None
     notional: Optional[str] = None
     qty: Optional[Union[str, float]] = None
     filled_qty: Optional[Union[str, float]] = None
     filled_avg_price: Optional[Union[str, float]] = None
     order_class: OrderClass
-    order_type: OrderType
-    type: OrderType
-    side: OrderSide
+    order_type: Optional[OrderType] = None
+    type: Optional[OrderType] = None
+    side: Optional[OrderSide] = None
     time_in_force: TimeInForce
     limit_price: Optional[Union[str, float]] = None
     stop_price: Optional[Union[str, float]] = None
@@ -237,10 +242,26 @@ class Order(ModelWithID):
     trail_percent: Optional[str] = None
     trail_price: Optional[str] = None
     hwm: Optional[str] = None
+    position_intent: Optional[PositionIntent] = None
+    ratio_qty: Optional[Union[str, float]] = None
 
     def __init__(self, **data: Any) -> None:
         if "order_class" not in data or data["order_class"] == "":
             data["order_class"] = OrderClass.SIMPLE
+
+        # mleg responses will give ''s that will need to be converted to None
+        # to avoid validation errors from pydantic
+        for k in [
+            "asset_id",
+            "symbol",
+            "asset_class",
+            "side",
+            "position_intent",
+            "type",
+            "order_type",
+        ]:
+            if k in data and data[k] == "":
+                data[k] = None
 
         super().__init__(**data)
 
@@ -289,16 +310,18 @@ class PortfolioHistory(BaseModel):
         equity (List[float]): Equity value of the account in dollar amount as of the end of each time window.
         profit_loss (List[float]): Profit/loss in dollar from the base value.
         profit_loss_pct (List[Optional[float]]): Profit/loss in percentage from the base value.
-        base_value (float): Basis in dollar of the profit loss calculation.
+        base_value (Optional[float]): Basis in dollar of the profit loss calculation.
         timeframe (str): Time window size of each data element.
+        cashflow (Dict[ActivityType, List[float]]): Cash flow amounts per activity type, if any.
     """
 
     timestamp: List[int]
     equity: List[float]
     profit_loss: List[float]
     profit_loss_pct: List[Optional[float]]
-    base_value: float
+    base_value: Optional[float] = None
     timeframe: str
+    cashflow: Dict[ActivityType, List[float]] = {}
 
 
 class Watchlist(ModelWithID):
@@ -495,9 +518,9 @@ class TradeAccount(ModelWithID):
           (inclusive of today)
         options_buying_power (Optional[str]): Your buying power for options trading
         options_approved_level (Optional[int]): The options trading level that was approved for this account.
-          0=disabled, 1=Covered Call/Cash-Secured Put, 2=Long Call/Put.
+          0=disabled, 1=Covered Call/Cash-Secured Put, 2=Long Call/Put, 3=Spreads/Straddles.
         options_trading_level (Optional[int]): The effective options trading level of the account. This is the minimum between account options_approved_level and account configurations max_options_trading_level.
-          0=disabled, 1=Covered Call/Cash-Secured Put, 2=Long
+          0=disabled, 1=Covered Call/Cash-Secured Put, 2=Long, 3=Spreads/Straddles.
     """
 
     account_number: str
@@ -548,7 +571,7 @@ class AccountConfiguration(BaseModel):
         suspend_trade (bool): If true Account becomes unable to submit new orders
         trade_confirm_email (TradeConfirmationEmail): Controls whether Trade confirmation emails are sent.
         ptp_no_exception_entry (bool): If set to true then Alpaca will accept orders for PTP symbols with no exception. Default is false.
-        max_options_trading_level (Optional[int]): The desired maximum options trading level. 0=disabled, 1=Covered Call/Cash-Secured Put, 2=Long Call/Put.
+        max_options_trading_level (Optional[int]): The desired maximum options trading level. 0=disabled, 1=Covered Call/Cash-Secured Put, 2=Long Call/Put, 3=Spreads/Straddles.
     """
 
     dtbp_check: DTBPCheck

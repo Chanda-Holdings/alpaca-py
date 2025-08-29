@@ -30,7 +30,7 @@ providing API keys. However, if you do provide API keys, your rate limit will be
 Historical Data
 ---------------
 
-There are 2 historical data clients: ``StockHistoricalDataClient``, ``CryptoHistoricalDataClient``, and ``OptionHistoricalDataClient``.
+There are 3 historical data clients: ``StockHistoricalDataClient``, ``CryptoHistoricalDataClient``, and ``OptionHistoricalDataClient``.
 The crypto data client does not require API keys to use.
 
 
@@ -158,7 +158,7 @@ methods to receive real-time data.
 
 .. code-block:: python
 
-    from alpaca.data import CryptoDataStream, StockDataStream
+    from alpaca.data.live import CryptoDataStream, OptionDataStream, StockDataStream
 
     # keys are required for live data
     crypto_stream = CryptoDataStream("api-key", "secret-key")

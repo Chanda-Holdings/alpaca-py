@@ -88,6 +88,7 @@ class OptionHistoricalDataClient(RESTClient):
         raw_bars = self._get_marketdata(
             path=f"/options/bars",
             params=request_params.to_request_fields(),
+            page_size=10_000,
         )
 
         if self._use_raw_data:
@@ -139,10 +140,10 @@ class OptionHistoricalDataClient(RESTClient):
         """Retrieves the latest trade for an option symbol or list of option symbols.
 
         Args:
-            request_params (OptionLatestQuoteRequest): The request object for retrieving the latest quote data.
+            request_params (OptionLatestTradeRequest): The request object for retrieving the latest trade data.
 
         Returns:
-            Union[Dict[str, Quote], RawData]: The latest quote in raw or wrapped format
+            Union[Dict[str, Trade], RawData]: The latest trade in raw or wrapped format
         """
         raw_latest_trades = self._get_marketdata(
             path=f"/options/trades/latest",
@@ -168,6 +169,7 @@ class OptionHistoricalDataClient(RESTClient):
         raw_trades = self._get_marketdata(
             path=f"/options/trades",
             params=request_params.to_request_fields(),
+            page_size=10_000,
         )
 
         if self._use_raw_data:
@@ -190,6 +192,8 @@ class OptionHistoricalDataClient(RESTClient):
         raw_snapshots = self._get_marketdata(
             path=f"/options/snapshots",
             params=request_params.to_request_fields(),
+            page_limit=1000,
+            page_size=1000,
         )
 
         if self._use_raw_data:
@@ -216,6 +220,8 @@ class OptionHistoricalDataClient(RESTClient):
         raw_snapshots = self._get_marketdata(
             path=f"/options/snapshots/{request_params.underlying_symbol}",
             params=params,
+            page_limit=1000,
+            page_size=1000,
         )
 
         if self._use_raw_data:

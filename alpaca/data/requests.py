@@ -133,9 +133,9 @@ class OptionBarsRequest(BaseBarsRequest):
 
     Attributes:
         symbol_or_symbols (Union[str, List[str]]): The ticker identifier or list of ticker identifiers.
-        timeframe (TimeFrame): The period over which the bars should be aggregated. (i.e. 5 Min bars, 1 Day bars)
-        start (Optional[datetime]): The beginning of the time interval for desired data. Timezone naive inputs assumed to be in UTC.
-        end (Optional[datetime]): The end of the time interval for desired data. Defaults to now. Timezone naive inputs assumed to be in UTC.
+        timeframe (TimeFrame): The length of time (also known as time interval) for which each Bar represents (i.e. 5 Min bars, 1 Day bars).
+        start (Optional[datetime]): The beginning of the time period for desired data. Timezone naive inputs assumed to be in UTC.
+        end (Optional[datetime]): The end of the time period for desired data. Defaults to now. Timezone naive inputs assumed to be in UTC.
         limit (Optional[int]): Upper limit of number of data points to return. Defaults to None.
         sort (Optional[Sort]): The chronological order of response based on the timestamp. Defaults to ASC.
     """
@@ -561,16 +561,20 @@ class CorporateActionsRequest(NonEmptyRequest):
 
     Attributes:
         symbols (Optional[List[str]]): The list of ticker identifiers.
+        cusips (Optional[List[str]]): The list of CUSIPs.
         types (Optional[List[CorporateActionsType]]): The types of corporate actions to filter by. (default: all types)
         start (Optional[date]): The inclusive start of the interval. Format: YYYY-MM-DD. (default: current day)
         end (Optional[date])): The inclusive end of the interval. Format: YYYY-MM-DD. (default: current day)
+        ids (Optional[List[str]]): The list of corporate action IDs. This parameter is mutually exclusive with all other filters (symbols, types, start, end).
         limit (Optional[int]): Upper limit of number of data points to return. (default: 1000)
         sort (Optional[Sort]): The chronological order of response based on the timestamp. Defaults to ASC.
     """
 
     symbols: Optional[List[str]] = None
+    cusips: Optional[List[str]] = None
     types: Optional[List[CorporateActionsType]] = None
     start: Optional[date] = None
     end: Optional[date] = None
+    ids: Optional[List[str]] = None
     limit: Optional[int] = 1000
     sort: Optional[Sort] = Sort.ASC

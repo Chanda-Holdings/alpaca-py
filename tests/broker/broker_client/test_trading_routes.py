@@ -260,6 +260,7 @@ def test_close_all_positions_for_account(reqmock, client: BrokerClient):
                     "trail_percent": null,
                     "trail_price": null,
                     "hwm": null,
+                    "position_intent": "buy_to_open",
                     "subtag": null,
                     "source": null
                 }
@@ -336,6 +337,7 @@ def test_close_position_for_account_with_id(reqmock, client: BrokerClient):
               "trail_percent": null,
               "trail_price": null,
               "hwm": null,
+              "position_intent": "buy_to_open",
               "commission": 1.25
             }}
         """,
@@ -389,6 +391,7 @@ def test_close_position_for_account_with_symbol(reqmock, client: BrokerClient):
               "trail_percent": null,
               "trail_price": null,
               "hwm": null,
+              "position_intent": "buy_to_open",
               "commission": 1.25
             }}
         """,
@@ -442,6 +445,7 @@ def test_close_position_for_account_with_qty(reqmock, client: BrokerClient):
           "trail_percent": null,
           "trail_price": null,
           "hwm": null,
+          "position_intent": "buy_to_open",
           "commission": 1.25
         }
     """,
@@ -495,6 +499,7 @@ def test_close_position_for_account_with_percentage(reqmock, client: BrokerClien
           "trail_percent": null,
           "trail_price": null,
           "hwm": null,
+          "position_intent": "buy_to_open",
           "commission": 1.25
         }
     """,
@@ -546,6 +551,30 @@ def test_get_portfolio_history_with_null_pl_pct(reqmock, client: BrokerClient):
           "profit_loss": [11.8, -3.74, 104.04],
           "profit_loss_pct": [null, null, null],
           "base_value": 27411.93,
+          "timeframe": "15Min"
+        }
+        """,
+    )
+
+    portfolio_history = client.get_portfolio_history_for_account(account_id)
+
+    assert reqmock.called_once
+    assert reqmock.request_history[0].qs == {}
+    assert isinstance(portfolio_history, PortfolioHistory)
+
+
+def test_get_portfolio_history_with_null_base_value(reqmock, client: BrokerClient):
+    account_id = "2a87c088-ffb6-472b-a4a3-cd9305c8605c"
+
+    reqmock.get(
+        f"{BaseURL.BROKER_SANDBOX.value}/v1/trading/accounts/{account_id}/account/portfolio/history",
+        text="""
+        {
+          "timestamp": [1580826600000, 1580827500000, 1580828400000],
+          "equity": [27423.73, 27408.19, 27515.97],
+          "profit_loss": [11.8, -3.74, 104.04],
+          "profit_loss_pct": [11.8, -3.74, 104.04],
+          "base_value": null,
           "timeframe": "15Min"
         }
         """,

@@ -57,13 +57,18 @@ class CorporateActionsClient(RESTClient):
 
         if request_params.symbols:
             params["symbols"] = ",".join(request_params.symbols)
+        if request_params.cusips:
+            params["cusips"] = ",".join(request_params.cusips)
         if request_params.types:
             params["types"] = ",".join(request_params.types)
+        if request_params.ids:
+            params["ids"] = ",".join(request_params.ids)
 
         response = self._get_marketdata(
             path="/corporate-actions",
             params=params,
             page_limit=1000,
+            page_size=1000,
         )
         if self._use_raw_data:
             return response
