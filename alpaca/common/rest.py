@@ -69,8 +69,8 @@ class RESTClient(ABC):
         self._use_raw_data: bool = raw_data
         self._session: Session = Session()
         adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100)
-        self._session.mount('https://', adapter)
-        self._session.mount('http://', adapter)
+        self._session.mount("https://", adapter)
+        self._session.mount("http://", adapter)
 
         # setting up request retry configurations
         self._retry: int = DEFAULT_RETRY_ATTEMPTS
