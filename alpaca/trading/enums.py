@@ -207,6 +207,7 @@ class AssetExchange(str, Enum):
     NYSE = "NYSE"
     NASDAQ = "NASDAQ"
     NYSEARCA = "NYSEARCA"
+    TXSE = "TXSE"
     FTXU = "FTXU"
     CBSE = "CBSE"
     CBXL = "CBXL"
